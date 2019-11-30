@@ -1,5 +1,8 @@
 package com.aes;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 public class AES {
@@ -36,5 +39,39 @@ public class AES {
             {0x8C, 0xA1, 0x89, 0x0D, 0xBF, 0xE6, 0x42, 0x68, 0x41, 0x99, 0x2D, 0x0F, 0xB0, 0x54, 0xBB, 0x16}
     };
 
+    /**
+     * Encrypts message using AES
+     *
+     * @param message message for encryption
+     * @param key     key
+     * @param mode    mode
+     * @param iv      initialization vector[CBC specific]
+     */
+    public void encrypt(String message, String key, Mode mode, String iv) {
+        byte[] paddedMsg = padString(message);
 
+    }
+
+    /**
+     * Length of the plaintext should be an multiple of the block size of the cipher[16B - AES]
+     * Function pads '1' and rest bits with zeros
+     *
+     * @param message message for padding
+     * @return message as byte array in HEX format
+     */
+    public byte[] padString(String message) {
+        ByteArrayOutputStream bStream = new ByteArrayOutputStream();
+        byte[] msgBits = message.getBytes(StandardCharsets.UTF_8);
+        try {
+            bStream.write(msgBits);
+            bStream.write(128);
+            //count how many 0s is needed for padding
+            int count = 16 - bStream.toByteArray().length % 16;
+            for (int i = 0; i < count; i++)
+                bStream.write(0);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return bStream.toByteArray();
+    }
 }
