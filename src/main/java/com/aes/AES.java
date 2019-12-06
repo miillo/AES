@@ -3,6 +3,9 @@ package com.aes;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 public class AES {
@@ -73,5 +76,40 @@ public class AES {
             e.printStackTrace();
         }
         return bStream.toByteArray();
+    }
+
+    /**
+     * Collects data into fixed-length chunks or blocks
+     * e.g. grouper([1,2,3,4,5,6,7], 3) --> [[1,2,3], [4,5,6] [7,null,null]]"
+     *
+     * @param paddedMsg padded message
+     * @param size      size of a block
+     * @return grouped iterable i.e. 'list of lists'
+     */
+    public List<List<Byte>> grouper(byte[] paddedMsg, int size) {
+        List<List<Byte>> resultList = new ArrayList<>();
+
+        int helper = 0;
+        List<Byte> tmp = new ArrayList<>();
+        for (byte b : paddedMsg) {
+            if (helper < size) {
+                tmp.add(b);
+                helper++;
+            } else {
+                helper = 1;
+                resultList.add(tmp);
+                tmp = new ArrayList<>();
+                tmp.add(b);
+            }
+        }
+
+        //filling 'free' spaces up to size with nulls
+        if (tmp.size() < size) {
+            for (int i = tmp.size(); i < size; i++)
+                tmp.add(null);
+            resultList.add(tmp);
+        }
+
+        return resultList;
     }
 }
