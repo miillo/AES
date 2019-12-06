@@ -2,6 +2,8 @@ package com.aes;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,7 +14,7 @@ public class AES {
 
     //supported modes
     public enum Mode {
-        CBC
+        CTR
     }
 
     //no. of rounds depends on the key length
@@ -50,9 +52,25 @@ public class AES {
      * @param mode    mode
      * @param iv      initialization vector[CBC specific]
      */
-    public void encrypt(String message, String key, Mode mode, String iv) {
+    public List<Byte> encrypt(String message, String key, Mode mode, String iv) {
+        // ! ! before going further we must get same result as in friend's code: paddedMsg and blocks doesn't match with
+        // python test by now
         byte[] paddedMsg = padString(message);
+        List<List<Byte>> blocks = grouper(paddedMsg, 16);
+        List<Byte> ret = new ArrayList<>();
 
+        if (mode == Mode.CTR) {
+            byte[] ivBytes = hexStringToByteArray(iv);
+            //strange cuz' this loop runs always once, but it was in friend's code
+            for (int i = 0; i < blocks.size(); i++) {
+                byte[] countBytes = convertIntToByteArray(i);
+            }
+        } else {
+            System.err.println("Mode: " + mode + " is not supported. Closing application.");
+            System.exit(1);
+        }
+
+        return ret;
     }
 
     /**
@@ -111,5 +129,36 @@ public class AES {
         }
 
         return resultList;
+    }
+
+    /**
+     * Converts hex string to byte array
+     *
+     * @param s hex string
+     * @return byte array
+     */
+    public byte[] hexStringToByteArray(String s) {
+        int len = s.length();
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
+                    + Character.digit(s.charAt(i + 1), 16));
+        }
+        return data;
+    }
+
+    /**
+     * Converts integer to byte array
+     *
+     * @param i integer for conversion
+     * @return byte array
+     */
+    public byte[] convertIntToByteArray(int i) {
+        ByteBuffer bBuffer = ByteBuffer
+                .allocate(16)
+                .order(ByteOrder.LITTLE_ENDIAN);
+        return bBuffer
+                .putInt(i)
+                .array();
     }
 }
