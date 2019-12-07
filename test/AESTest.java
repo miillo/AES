@@ -12,11 +12,15 @@ public class AESTest {
 
     @Test
     public void customTest() {
-        System.out.println(Arrays.toString(aes.hexStringToByteArray("000102030405060708090a0b0c0d0e0f")));
-        var arr = aes.hexStringToByteArray("8ea2b7ca516745bfeafc49904b496089");
-        for (int i = 0; i < arr.length; i++) {
-            System.out.print((arr[i] & 0xff) + " ");
-        }
+//        System.out.println(Arrays.toString(aes.hexStringToByteArray("000102030405060708090a0b0c0d0e0f")));
+//        var arr = aes.hexStringToByteArray("8ea2b7ca516745bfeafc49904b496089");
+//        for (int i = 0; i < arr.length; i++) {
+//            System.out.print((arr[i] & 0xff) + " ");
+//        }
+
+        int[] arr = {12,13,14,15};
+        System.out.println(Arrays.toString(aes.rotateArray(arr, 1)));
+
     }
 
     @Test
