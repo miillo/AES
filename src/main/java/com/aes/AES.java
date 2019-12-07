@@ -236,7 +236,26 @@ public class AES {
         int rounds = this.rounds.get(keyBytes.length * 8);
         byte[] expandedKey = keyExpansion(keyBytes);
 
-        //up to this point operations give same results as python
+        byte[] fstKey = new byte[16];
+        for (int i = 0; i < 16; i++) {
+            fstKey[i] = expandedKey[i];
+        }
+
+        List<List<Byte>> groupedFstKey = grouper(fstKey, 4);
+        state = addRoundKey(state, groupedFstKey);
+
+//        for
+        state = subBytes(state);
+        state = shiftRows(state);
+//up to this point operations give same results as python
+
+        state = mixColumns(state);
+        for (List<Byte> l : state) {
+            for (Byte b : l) {
+                System.out.println(b & 0xff);
+            }
+            System.out.println();
+        }
 
         return new byte[10];
     }
@@ -361,4 +380,149 @@ public class AES {
         }
         return new String(hexChars);
     }
+
+    /**
+     * Adds AES round key
+     *
+     * @param state AES state
+     * @param key   grouped key
+     * @return state structure with rounded key
+     */
+    public List<List<Byte>> addRoundKey(List<List<Byte>> state, List<List<Byte>> key) {
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                List<Byte> stateNested = state.get(i);
+                List<Byte> keyNested = key.get(i);
+
+                Byte newValue = (byte) (stateNested.get(j) ^ keyNested.get(j));
+                stateNested.set(j, newValue);
+            }
+        }
+        return state;
+    }
+
+    /**
+     * Subtraction of state structure bytes
+     *
+     * @param state AES state
+     * @return subtracted state structure
+     */
+    public List<List<Byte>> subBytes(List<List<Byte>> state) {
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                List<Byte> stateNested = state.get(i);
+                stateNested.set(j, (byte) this.sBox[stateNested.get(j) & 0xff]); //0xff for positive byte values
+            }
+        }
+        return state;
+    }
+
+    /**
+     * Shifts rows of state structure
+     *
+     * @param state AES state
+     * @return shifted state structure
+     */
+    public List<List<Byte>> shiftRows(List<List<Byte>> state) {
+        List<List<Byte>> newState = new ArrayList<>();
+        newState.add(new ArrayList<>(4));
+        newState.add(new ArrayList<>(4));
+        newState.add(new ArrayList<>(4));
+        newState.add(new ArrayList<>(4));
+
+        int row = 0;
+        int column = 0;
+        for (int i = 0; i < 4; i++) {
+            row = i;
+            column = 0;
+            for (int j = 0; j < 4; j++) {
+                if (row == 4)
+                    row = 0;
+                newState.get(i).add(state.get(row).get(column));
+                row++;
+                column++;
+            }
+        }
+        return newState;
+    }
+
+    /**
+     * http://brandon.sternefamily.net/wp-content/uploads/2007/06/pyAES.txt
+     * http://brandon.sternefamily.net/wp-content/uploads/2007/06/pyAES.txt
+     *
+     * @param state AES state
+     * @return state structure with mixed columns
+     */
+    public List<List<Byte>> mixColumns(List<List<Byte>> state) {
+        for (int i = 0; i < 4; i++) {
+            List<Byte> column = new ArrayList<>();
+            //make a temporary column by merginng items with the same index in all rows
+            for (int j = 0; j < 4; j++) {
+                column.add(state.get(i).get(j));
+            }
+
+
+            //mix column for temp column todo fix mixing probably there is a mistake
+            column = mixColumn(column);
+
+//            for (int f = 0; f < column.size(); f++) {
+//                System.out.print((column.get(f) & 0xff) + " ");
+//            }
+//            System.out.println();
+
+            //transfer column items back to state matrix
+            for (int j = 0; j < 4; j++) {
+                List<Byte> nestedState = state.get(i);
+                nestedState.set(j, column.get(j));
+            }
+        }
+        return state;
+    }
+
+    /**
+     * Mixes column using Galois Field Multiplication
+     *
+     * @param column column
+     * @return mixed column
+     */
+    public List<Byte> mixColumn(List<Byte> column) {
+        List<Byte> columnCopy = new ArrayList<>(column);
+        byte val0 = (byte) (galoisMul(columnCopy.get(0), (byte) 2) ^ galoisMul(columnCopy.get(3), (byte) 1) ^ galoisMul(columnCopy.get(2), (byte) 1) ^ galoisMul(columnCopy.get(1), (byte) 3));
+        column.set(0, val0);
+
+        byte val1 = (byte) (galoisMul(columnCopy.get(1), (byte) 2) ^ galoisMul(columnCopy.get(0), (byte) 1) ^ galoisMul(columnCopy.get(3), (byte) 1) ^ galoisMul(columnCopy.get(2), (byte) 3));
+        column.set(1, val1);
+
+        byte val2 = (byte) (galoisMul(columnCopy.get(2), (byte) 2) ^ galoisMul(columnCopy.get(1), (byte) 1) ^ galoisMul(columnCopy.get(0), (byte) 1) ^ galoisMul(columnCopy.get(3), (byte) 3));
+        column.set(0, val2);
+
+        byte val3 = (byte) (galoisMul(columnCopy.get(3), (byte) 2) ^ galoisMul(columnCopy.get(2), (byte) 1) ^ galoisMul(columnCopy.get(1), (byte) 1) ^ galoisMul(columnCopy.get(0), (byte) 3));
+        column.set(0, val3);
+
+        return column;
+    }
+
+    /**
+     * Galois Field multiplication algorithm
+     *
+     * @param a value 1
+     * @param b value 2
+     * @return multiplication factor
+     */
+    public int galoisMul(byte a, byte b) {
+        byte p = 0;
+        for (int i = 0; i < 8; i++) {
+            if ((byte) (b & 1) == 1) {
+                p = (byte) (p ^ a);
+            }
+            byte hiBitSet = (byte) (a & 0x80);
+            a = (byte) (a << 1);
+            if (hiBitSet == 0x80) {
+                a = (byte) (a ^ 0x1b);
+            }
+            b = (byte) (b >> 1);
+        }
+        return p % 256;
+    }
+
 }
