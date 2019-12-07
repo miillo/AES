@@ -64,11 +64,17 @@ public class AES {
         List<Byte> ret = new ArrayList<>();
 
         if (mode == Mode.CTR) {
-//            byte[] ivBytes = hexStringToByteArray(iv);
-//            //strange cuz' this loop runs always once, but it was in friend's code
-//            for (int i = 0; i < blocks.size(); i++) {
-//                byte[] countBytes = convertIntToByteArray(i);
-//            }
+            byte[] ivBytes = hexStringToByteArray(iv);
+            //strange cuz' this loop runs always once, but it was in friend's code
+            for (int i = 0; i < blocks.size(); i++) {
+                byte[] countBytes = convertIntToByteArray(i);
+                byte[] aesIn = xorArraysWithSameLength(ivBytes, countBytes);
+                byte[] countCiphered = encryptBlock(key, aesIn, isHex);
+
+
+            }
+
+
         } else {
             System.err.println("Mode: " + mode + " is not supported. Closing application.");
             System.exit(1);
@@ -151,7 +157,6 @@ public class AES {
         return data;
     }
 
-
     /**
      * Converts integer to byte array
      *
@@ -165,5 +170,33 @@ public class AES {
         return bBuffer
                 .putInt(i)
                 .array();
+    }
+
+    /**
+     * Performs XOR operation on arrays with same length
+     *
+     * @param arr1 array 1
+     * @param arr2 array 2
+     * @return new array with XOR'ed values
+     */
+    public byte[] xorArraysWithSameLength(byte[] arr1, byte[] arr2) {
+        byte[] result = new byte[arr1.length];
+        for (int i = 0; i < result.length; i++)
+            result[i] = (byte) (arr1[i] ^ arr2[i]);
+        return result;
+    }
+
+    //maybe should return List<Byte> ?
+    public byte[] encryptBlock(String key, byte[] text, boolean isHex) {
+        List<List<Byte>> state = grouper(text, 4);
+        byte[] keyBytes;
+        if (isHex) {
+            keyBytes = hexStringToByteArray(key);
+        } else {
+            keyBytes = new byte[16]; //todo: how can we do it?
+        }
+        int rounds = this.rounds.get(keyBytes.length * 8);
+
+        return new byte[10];
     }
 }
