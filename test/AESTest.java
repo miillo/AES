@@ -10,35 +10,36 @@ import java.util.List;
 public class AESTest {
     private final AES aes = new AES();
 
+//    @Test
+//    public void customTest() {
+//        System.out.println(Arrays.toString(aes.hexStringToByteArray("8e")));
+//        var arr = aes.hexStringToByteArray("8ea2b7ca516745bfeafc49904b496089");
+//        for (int i = 0; i < arr.length; i++) {
+//            System.out.print((arr[i] & 0xff) + " ");
+//        }
+//    }
+
     @Test
     public void encryptCTRTest() {
         String key = "000102030405060708090a0b0c0d0e0f";
         String message = "8ea2b7ca516745bfeafc49904b496089";
         String iv = "11223344556677889911223344556677";
 
-        List<Byte> encrypted = aes.encrypt(message, key, AES.Mode.CTR, iv);
+        List<Byte> encrypted = aes.encrypt(message, key, AES.Mode.CTR, true, iv);
     }
 
-    //@Test
+    @Test
     public void padStringTest() {
         System.out.println(Hex.encodeHexString(aes.padString("1234567891234567")));
     }
 
-    //    @Test
+        @Test
     public void grouperTest() {
         System.out.println(Arrays.toString(aes.grouper(aes.padString("12345678"), 3).toArray()));
     }
 
-//    @Test
+    @Test
     public void hexStringToByteArrayTest() {
-//        System.out.println(Arrays.toString(aes.hexStringToByteArray("11223344556677889911223344556677")));
-        ByteBuffer bBuffer = ByteBuffer
-                .allocate(4)
-                .order(ByteOrder.LITTLE_ENDIAN);
-        byte[] countBytes = bBuffer
-                .putInt(0)
-                .array();
-
-        System.out.println(Arrays.toString(countBytes));
+        System.out.println(Arrays.toString(aes.hexStringToByteArray("11223344556677889911223344556677")));
     }
 }

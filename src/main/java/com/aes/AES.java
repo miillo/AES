@@ -52,19 +52,23 @@ public class AES {
      * @param mode    mode
      * @param iv      initialization vector[CBC specific]
      */
-    public List<Byte> encrypt(String message, String key, Mode mode, String iv) {
-        // ! ! before going further we must get same result as in friend's code: paddedMsg and blocks doesn't match with
-        // python test by now
-        byte[] paddedMsg = padString(message);
+    public List<Byte> encrypt(String message, String key, Mode mode, boolean isHex, String iv) {
+        byte[] paddedMsg;
+        if (isHex) {
+            paddedMsg = hexStringToByteArray(message);
+        } else {
+            paddedMsg = padString(message); //todo: should be tested
+        }
+
         List<List<Byte>> blocks = grouper(paddedMsg, 16);
         List<Byte> ret = new ArrayList<>();
 
         if (mode == Mode.CTR) {
-            byte[] ivBytes = hexStringToByteArray(iv);
-            //strange cuz' this loop runs always once, but it was in friend's code
-            for (int i = 0; i < blocks.size(); i++) {
-                byte[] countBytes = convertIntToByteArray(i);
-            }
+//            byte[] ivBytes = hexStringToByteArray(iv);
+//            //strange cuz' this loop runs always once, but it was in friend's code
+//            for (int i = 0; i < blocks.size(); i++) {
+//                byte[] countBytes = convertIntToByteArray(i);
+//            }
         } else {
             System.err.println("Mode: " + mode + " is not supported. Closing application.");
             System.exit(1);
@@ -125,9 +129,8 @@ public class AES {
         if (tmp.size() < size) {
             for (int i = tmp.size(); i < size; i++)
                 tmp.add(null);
-            resultList.add(tmp);
         }
-
+        resultList.add(tmp);
         return resultList;
     }
 
@@ -144,8 +147,10 @@ public class AES {
             data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
                     + Character.digit(s.charAt(i + 1), 16));
         }
+
         return data;
     }
+
 
     /**
      * Converts integer to byte array
