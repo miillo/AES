@@ -102,10 +102,9 @@ public class AES {
                 byte[] countBytes = convertIntToByteArray(i);
                 byte[] aesIn = xorArraysWithSameLength(ivBytes, countBytes);
                 byte[] countCiphered = encryptBlock(key, aesIn, isHex);
-
+                byte[] cipherText = xorArraysWithSameLength(Bytes.toArray(blocks.get(i)), countCiphered);
+                ret.addAll(Arrays.asList(ArrayUtils.toObject(cipherText)));
             }
-
-
         } else {
             System.err.println("Mode: " + mode + " is not supported. Closing application.");
             System.exit(1);
@@ -218,14 +217,13 @@ public class AES {
     }
 
     /**
-     * todo
+     * Encrypts block with AES algorithm
      *
-     * @param key
-     * @param text
-     * @param isHex
-     * @return
+     * @param key key
+     * @param text text for encryption
+     * @param isHex whether text is in HEX format
+     * @return encrypted block of size 4B
      */
-    //maybe should return List<Byte> ?
     public byte[] encryptBlock(String key, byte[] text, boolean isHex) {
         List<List<Byte>> state = grouper(text, 4);
         byte[] keyBytes;
