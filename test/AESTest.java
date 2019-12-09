@@ -22,8 +22,11 @@ public class AESTest {
 
     @Test
     public void encryptCTRTest() {
-        String key = "000102030405060708090a0b0c0d0e0f";
+        //key length: 16B / 24B / 32B
+        String key = "000102030405060708090a0b0c0d0e0f0a0b0c0d0e0f0a0b";
+        //Any length
         String message = "8ea2b7ca516745bfeafc49904b496089";
+        //IV for CTR may be any values LESS THAN 16B
         String iv = "11223344556677889911223344556677";
 
         //our implementation

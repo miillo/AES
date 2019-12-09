@@ -219,8 +219,8 @@ public class AES {
     /**
      * Encrypts block with AES algorithm
      *
-     * @param key key
-     * @param text text for encryption
+     * @param key   key
+     * @param text  text for encryption
      * @param isHex whether text is in HEX format
      * @return encrypted block of size 4B
      */
