@@ -103,7 +103,6 @@ public class AES {
                 byte[] aesIn = xorArraysWithSameLength(ivBytes, countBytes);
                 byte[] countCiphered = encryptBlock(key, aesIn, isHex);
 
-
             }
 
 
@@ -253,18 +252,20 @@ public class AES {
             state = addRoundKey(state, groupedRoundKey);
         }
 
-        //up to this point operations give same results as python
+        state = subBytes(state);
+        state = shiftRows(state);
 
-        for (List<Byte> l : state) {
-            for (Byte b : l) {
-                System.out.print((b & 0xff) + " ");
-            }
-            System.out.println();
-        }
+        byte[] tmpExpandedKey = Arrays.copyOfRange(expandedKey, expandedKey.length - 16, expandedKey.length);
+        List<List<Byte>> groupedTmpExpandedKey = grouper(tmpExpandedKey, 4);
+        state = addRoundKey(state, groupedTmpExpandedKey);
 
-        return new byte[10];
+        //merging state structure
+        List<Byte> mergedState = new ArrayList<>();
+        for (List<Byte> l : state)
+            mergedState.addAll(l);
+
+        return Bytes.toArray(mergedState);
     }
-
 
 
     /**
@@ -525,7 +526,7 @@ public class AES {
      * Creates new round key by choosing bits from expanded key
      *
      * @param expandedKey expanded key
-     * @param round round
+     * @param round       round
      * @return new round key
      */
     public byte[] createRoundKey(byte[] expandedKey, int round) {
