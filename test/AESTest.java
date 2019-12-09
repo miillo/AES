@@ -18,8 +18,10 @@ public class AESTest {
 //            System.out.print((arr[i] & 0xff) + " ");
 //        }
 
-        int[] arr = {12,13,14,15};
-        System.out.println(Arrays.toString(aes.rotateArray(arr, 1)));
+        int a = 130;
+        int b = 1;
+        a = a << 1;
+        System.out.println(a);
 
     }
 

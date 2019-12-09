@@ -1,5 +1,7 @@
 package com.aes;
 
+import com.google.common.primitives.Bytes;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.ByteArrayOutputStream;
@@ -237,28 +239,33 @@ public class AES {
         byte[] expandedKey = keyExpansion(keyBytes);
 
         byte[] fstKey = new byte[16];
-        for (int i = 0; i < 16; i++) {
-            fstKey[i] = expandedKey[i];
-        }
+        System.arraycopy(expandedKey, 0, fstKey, 0, 16);
 
         List<List<Byte>> groupedFstKey = grouper(fstKey, 4);
         state = addRoundKey(state, groupedFstKey);
 
-//        for
-        state = subBytes(state);
-        state = shiftRows(state);
-//up to this point operations give same results as python
+        for (int i = 1; i < rounds; i++) {
+            state = subBytes(state);
+            state = shiftRows(state);
+            state = mixColumns(state);
+            byte[] roundKey = createRoundKey(expandedKey, i);
+            List<List<Byte>> groupedRoundKey = grouper(roundKey, 4);
+            state = addRoundKey(state, groupedRoundKey);
+        }
 
-        state = mixColumns(state);
+        //up to this point operations give same results as python
+
         for (List<Byte> l : state) {
             for (Byte b : l) {
-                System.out.println(b & 0xff);
+                System.out.print((b & 0xff) + " ");
             }
             System.out.println();
         }
 
         return new byte[10];
     }
+
+
 
     /**
      * Key expansion operation - https://www.samiam.org/key-schedule.html
@@ -456,21 +463,13 @@ public class AES {
     public List<List<Byte>> mixColumns(List<List<Byte>> state) {
         for (int i = 0; i < 4; i++) {
             List<Byte> column = new ArrayList<>();
-            //make a temporary column by merginng items with the same index in all rows
             for (int j = 0; j < 4; j++) {
-                column.add(state.get(i).get(j));
+                byte i1 = state.get(i).get(j);
+                column.add(i1);
             }
 
-
-            //mix column for temp column todo fix mixing probably there is a mistake
             column = mixColumn(column);
 
-//            for (int f = 0; f < column.size(); f++) {
-//                System.out.print((column.get(f) & 0xff) + " ");
-//            }
-//            System.out.println();
-
-            //transfer column items back to state matrix
             for (int j = 0; j < 4; j++) {
                 List<Byte> nestedState = state.get(i);
                 nestedState.set(j, column.get(j));
@@ -489,16 +488,12 @@ public class AES {
         List<Byte> columnCopy = new ArrayList<>(column);
         byte val0 = (byte) (galoisMul(columnCopy.get(0), (byte) 2) ^ galoisMul(columnCopy.get(3), (byte) 1) ^ galoisMul(columnCopy.get(2), (byte) 1) ^ galoisMul(columnCopy.get(1), (byte) 3));
         column.set(0, val0);
-
         byte val1 = (byte) (galoisMul(columnCopy.get(1), (byte) 2) ^ galoisMul(columnCopy.get(0), (byte) 1) ^ galoisMul(columnCopy.get(3), (byte) 1) ^ galoisMul(columnCopy.get(2), (byte) 3));
         column.set(1, val1);
-
         byte val2 = (byte) (galoisMul(columnCopy.get(2), (byte) 2) ^ galoisMul(columnCopy.get(1), (byte) 1) ^ galoisMul(columnCopy.get(0), (byte) 1) ^ galoisMul(columnCopy.get(3), (byte) 3));
-        column.set(0, val2);
-
+        column.set(2, val2);
         byte val3 = (byte) (galoisMul(columnCopy.get(3), (byte) 2) ^ galoisMul(columnCopy.get(2), (byte) 1) ^ galoisMul(columnCopy.get(1), (byte) 1) ^ galoisMul(columnCopy.get(0), (byte) 3));
-        column.set(0, val3);
-
+        column.set(3, val3);
         return column;
     }
 
@@ -509,20 +504,35 @@ public class AES {
      * @param b value 2
      * @return multiplication factor
      */
-    public int galoisMul(byte a, byte b) {
-        byte p = 0;
+    public byte galoisMul(byte a, byte b) {
+        int p = 0;
         for (int i = 0; i < 8; i++) {
-            if ((byte) (b & 1) == 1) {
-                p = (byte) (p ^ a);
+            if ((b & 1) == 1) {
+                p = p ^ a;
             }
-            byte hiBitSet = (byte) (a & 0x80);
-            a = (byte) (a << 1);
+            int hiBitSet = a & 0x80;
+            a = (byte) ((a & 0xff) << 1); // ! a must be AND'ed with 0xff for positive value [fixed int length case]
             if (hiBitSet == 0x80) {
                 a = (byte) (a ^ 0x1b);
             }
             b = (byte) (b >> 1);
         }
-        return p % 256;
+        return (byte) (p % 256);
     }
 
+
+    /**
+     * Creates new round key by choosing bits from expanded key
+     *
+     * @param expandedKey expanded key
+     * @param round round
+     * @return new round key
+     */
+    public byte[] createRoundKey(byte[] expandedKey, int round) {
+        List<Byte> newExpandedKey = new ArrayList<>();
+        for (int i = (round * 16); i < (round * 16 + 16); i++) {
+            newExpandedKey.add(expandedKey[i]);
+        }
+        return Bytes.toArray(newExpandedKey);
+    }
 }
