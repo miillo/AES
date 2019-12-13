@@ -9,10 +9,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class AES {
 
@@ -22,18 +19,21 @@ public class AES {
     }
 
     //no. of rounds depends on the key length
-    private Map<Integer, Integer> rounds = Map.ofEntries(
-            Map.entry(128, 10),
-            Map.entry(192, 12),
-            Map.entry(256, 14)
-    );
+    private Map<Integer, Integer> rounds = new HashMap<Integer, Integer>(){{
+        put(128,10);
+        put(192, 12);
+        put(256, 14);
+
+    }};
 
     //max key expansions lengths
-    private Map<Integer, Integer> keyExpansionMaxSizes = Map.ofEntries(
-            Map.entry(16, 176),
-            Map.entry(24, 208),
-            Map.entry(32, 240)
-    );
+    private Map<Integer, Integer> keyExpansionMaxSizes = new HashMap<Integer, Integer>(){
+        {
+            put(16, 176);
+            put(24, 208);
+            put(32, 240);
+        }};
+
 
     //S-Box table for Byte Substitution layer -> taken from official documentation
     //previously was 2d int matrix
