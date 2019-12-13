@@ -84,7 +84,7 @@ public class AES {
      * @param mode    mode
      * @param iv      initialization vector[CBC specific]
      */
-    public List<Byte> encrypt(String message, String key, Mode mode, boolean isHex, String iv) {
+    public List<Byte> encrypt(String message, String key, boolean isHex, String iv) {
         byte[] paddedMsg;
         if (isHex) {
             paddedMsg = hexStringToByteArray(message);
@@ -95,19 +95,14 @@ public class AES {
         List<List<Byte>> blocks = grouper(paddedMsg, 16);
         List<Byte> ret = new ArrayList<>();
 
-        if (mode == Mode.CTR) {
-            byte[] ivBytes = hexStringToByteArray(iv);
-            //strange cuz' this loop runs always once, but it was in friend's code
-            for (int i = 0; i < blocks.size(); i++) {
-                byte[] countBytes = convertIntToByteArray(i);
-                byte[] aesIn = xorArraysWithSameLength(ivBytes, countBytes);
-                byte[] countCiphered = encryptBlock(key, aesIn, isHex);
-                byte[] cipherText = xorArraysWithSameLength(Bytes.toArray(blocks.get(i)), countCiphered);
-                ret.addAll(Arrays.asList(ArrayUtils.toObject(cipherText)));
-            }
-        } else {
-            System.err.println("Mode: " + mode + " is not supported. Closing application.");
-            System.exit(1);
+        byte[] ivBytes = hexStringToByteArray(iv);
+        //strange cuz' this loop runs always once, but it was in friend's code
+        for (int i = 0; i < blocks.size(); i++) {
+            byte[] countBytes = convertIntToByteArray(i);
+            byte[] aesIn = xorArraysWithSameLength(ivBytes, countBytes);
+            byte[] countCiphered = encryptBlock(key, aesIn, isHex);
+            byte[] cipherText = xorArraysWithSameLength(Bytes.toArray(blocks.get(i)), countCiphered);
+            ret.addAll(Arrays.asList(ArrayUtils.toObject(cipherText)));
         }
 
         return ret;
