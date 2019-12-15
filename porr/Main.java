@@ -1,6 +1,4 @@
-package com.aes;
 import com.google.common.primitives.Bytes;
-import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.ByteArrayOutputStream;
@@ -8,16 +6,25 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
+
 public class Main {
-	
-private Map<Integer, Integer> rounds = new HashMap<Integer, Integer>(){{
+
+    public static void main(String[] args) {
+        Main main = new Main();
+
+        System.out.println(main.encrypt("8ea2b7ca516745bfeafc49904b496089001122334455667788991122334455668ea2b7ca516745bfeafc49904b49608900112233445566778899112233445566", "000102030405060708090a0b0c0d0e0f0a0b0c0d0e0f0a0b",true, "11223344556677889911223344556677"));
+
+    }
+    private Map<Integer, Integer> rounds = new HashMap<Integer, Integer>(){{
         put(128,10);
         put(192, 12);
         put(256, 14);
 
     }};
-	//max key expansions lengths
+
+    //max key expansions lengths
     private Map<Integer, Integer> keyExpansionMaxSizes = new HashMap<Integer, Integer>(){
         {
             put(16, 176);
@@ -67,42 +74,12 @@ private Map<Integer, Integer> rounds = new HashMap<Integer, Integer>(){{
             0x61, 0xc2, 0x9f, 0x25, 0x4a, 0x94, 0x33, 0x66, 0xcc, 0x83, 0x1d, 0x3a, 0x74, 0xe8, 0xcb, 0x8d
     };
 
-    public static void main(String[] args) {
-		Main main = new Main();
-		//System.out.println(main.bytesToHex("Any String you want".getBytes()));
-		System.out.println(main.keyExpansion(main.hexStringToByteArray("000102030405060708090a0b0c0d0e0f")));
-
-    }
-	    /**
-     * Converts bytes array to hex string
-     *
-     * @param bytes bytes array
-     * @return hex string
-     */
-	public String bytesToHex(byte[] bytes) {
-        char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
-		System.out.println(bytes.length);
-        char[] hexChars = new char[bytes.length * 4];
-		char[][] hexCharList = new char[2][bytes.length * 2];
-		// omp parallel threadNum(4)
-		{
-		// omp for 
-        for (int j = 0; j < bytes.length; j++) {
-			System.out.println(bytes[j] + " " + OMP4J_THREAD_NUM + " " + OMP4J_NUM_THREADS);
-            int v = bytes[j] & 0xFF;
-            hexChars[j * 2] = HEX_ARRAY[v >>> 4];
-			hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
-        }
-		
-		}
-        return new String(hexChars);
-    }
-	
-	 /**
+    /**
      * Encrypts message using AES
      *
      * @param message message for encryption
      * @param key     key
+     * @param mode    mode
      * @param iv      initialization vector[CBC specific]
      */
     public List<Byte> encrypt(String message, String key, boolean isHex, String iv) {
@@ -116,14 +93,26 @@ private Map<Integer, Integer> rounds = new HashMap<Integer, Integer>(){{
         List<List<Byte>> blocks = grouper(paddedMsg, 16);
         List<Byte> ret = new ArrayList<>();
 
-		byte[] ivBytes = hexStringToByteArray(iv);
-		//strange cuz' this loop runs always once, but it was in friend's code
-		for (int i = 0; i < blocks.size(); i++) {
-			byte[] countBytes = convertIntToByteArray(i);
-			byte[] aesIn = xorArraysWithSameLength(ivBytes, countBytes);
-			byte[] countCiphered = encryptBlock(key, aesIn, isHex);
-			byte[] cipherText = xorArraysWithSameLength(Bytes.toArray(blocks.get(i)), countCiphered);
-			ret.addAll(Arrays.asList(ArrayUtils.toObject(cipherText)));
+        byte[] ivBytes = hexStringToByteArray(iv);
+        
+		System.out.println(blocks.size());
+		
+		//omp parallel threadNum(4)
+		{
+			//omp for
+			for (int i = 0; i < blocks.size(); i++) {
+				System.out.println(i + " " + OMP4J_THREAD_NUM +  " " + OMP4J_NUM_THREADS);
+				//System.out.println(i);
+				byte[] countBytes = convertIntToByteArray(i);
+				System.out.println("countBytes");
+				byte[] aesIn = xorArraysWithSameLength(ivBytes, countBytes);
+				System.out.println("xorArraysWithSameLength");
+				byte[] countCiphered = encryptBlock(key, aesIn, isHex);
+				System.out.println("countCiphered");
+				byte[] cipherText = xorArraysWithSameLength(Bytes.toArray(blocks.get(i)), countCiphered);
+				System.out.println("xorArraysWithSameLength");
+				ret.addAll(Arrays.asList(ArrayUtils.toObject(cipherText)));
+			}
 		}
 
         return ret;
@@ -165,7 +154,6 @@ private Map<Integer, Integer> rounds = new HashMap<Integer, Integer>(){{
 
         int helper = 0;
         List<Byte> tmp = new ArrayList<>();
-		
         for (byte b : paddedMsg) {
             if (helper < size) {
                 tmp.add(b);
@@ -227,9 +215,11 @@ private Map<Integer, Integer> rounds = new HashMap<Integer, Integer>(){{
      * @return new array with XOR'ed values
      */
     public byte[] xorArraysWithSameLength(byte[] arr1, byte[] arr2) {
+		
         byte[] result = new byte[arr1.length];
         for (int i = 0; i < result.length; i++)
             result[i] = (byte) (arr1[i] ^ arr2[i]);
+		
         return result;
     }
 
@@ -258,15 +248,17 @@ private Map<Integer, Integer> rounds = new HashMap<Integer, Integer>(){{
         List<List<Byte>> groupedFstKey = grouper(fstKey, 4);
         state = addRoundKey(state, groupedFstKey);
 
-        for (int i = 1; i < rounds; i++) {
-            state = subBytes(state);
-            state = shiftRows(state);
-            state = mixColumns(state);
-            byte[] roundKey = createRoundKey(expandedKey, i);
-            List<List<Byte>> groupedRoundKey = grouper(roundKey, 4);
-            state = addRoundKey(state, groupedRoundKey);
-        }
-
+	
+		
+			for (int i = 1; i < rounds; i++) {
+				state = subBytes(state);
+				state = shiftRows(state);
+				state = mixColumns(state);
+				byte[] roundKey = createRoundKey(expandedKey, i);
+				List<List<Byte>> groupedRoundKey = grouper(roundKey, 4);
+				state = addRoundKey(state, groupedRoundKey);
+			}
+		
         state = subBytes(state);
         state = shiftRows(state);
 
@@ -290,15 +282,12 @@ private Map<Integer, Integer> rounds = new HashMap<Integer, Integer>(){{
      * @return expanded key
      */
     public byte[] keyExpansion(byte[] cipherKey) {
-		System.out.println(cipherKey);
-		System.out.println("1");
         int cipherKeySize = cipherKey.length;
-		System.out.println(cipherKey.length);
         List<Integer> expandedKey = new ArrayList<>(); //container for expanded key | ? not sure if byte[] or list ? int or byte?
         int currentSize = 0;
         int rconIteration = 1;
         int[] temp = {0, 0, 0, 0}; //temporary list to store 4B at a time
-		System.out.println("1");
+
         //copy the first cipher_key bytes of the cipher key to the expanded key
         for (byte b : cipherKey) {
             expandedKey.add((int) b);
@@ -310,19 +299,15 @@ private Map<Integer, Integer> rounds = new HashMap<Integer, Integer>(){{
             for (int i = 0; i < 4; i++) {
                 temp[i] = expandedKey.get((currentSize - 4) + i);
             }
-		System.out.println("while");
+
             //every 32 bytes apply the core schedule to t
             if (cipherKeySize == 32 && currentSize % 32 == 0) {
-						System.out.println("1");
                 temp = keyScheduleCore(temp, rconIteration);
-						System.out.println("2");
                 rconIteration += 1;
             }
 
             if (cipherKeySize == 16 && currentSize % 16 == 0) {
-               System.out.println("1");
                 temp = keyScheduleCore(temp, rconIteration);
-						System.out.println("2");
                 rconIteration += 1;
             }
 
@@ -345,7 +330,7 @@ private Map<Integer, Integer> rounds = new HashMap<Integer, Integer>(){{
                 currentSize += 1;
             }
         }
-		System.out.println("po while");
+
         Byte[] convertedExKey = expandedKey
                 .stream()
                 .map(Integer::byteValue)
@@ -392,7 +377,24 @@ private Map<Integer, Integer> rounds = new HashMap<Integer, Integer>(){{
         }
         return array;
     }
-  
+
+    /**
+     * Converts bytes array to hex string
+     *
+     * @param bytes bytes array
+     * @return hex string
+     */
+    public String bytesToHex(byte[] bytes) {
+        char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
+
+        char[] hexChars = new char[bytes.length * 2];
+        for (int j = 0; j < bytes.length; j++) {
+            int v = bytes[j] & 0xFF;
+            hexChars[j * 2] = HEX_ARRAY[v >>> 4];
+            hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
+        }
+        return new String(hexChars);
+    }
 
     /**
      * Adds AES round key
