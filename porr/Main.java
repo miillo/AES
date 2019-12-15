@@ -97,24 +97,25 @@ public class Main {
         
 		System.out.println(blocks.size());
 		
+		int threads = 4; //tutaj wiadomo - zmeniamy na tyle ile watkow puszczamy
+		byte[][] cipherText = cipherText = new byte[threads][];
+		
 		//omp parallel threadNum(4)
 		{
 			//omp for
 			for (int i = 0; i < blocks.size(); i++) {
+				// przy mierzeniu czasu zakomentowac ponizsza linijke
 				System.out.println(i + " " + OMP4J_THREAD_NUM +  " " + OMP4J_NUM_THREADS);
-				//System.out.println(i);
 				byte[] countBytes = convertIntToByteArray(i);
-				System.out.println("countBytes");
 				byte[] aesIn = xorArraysWithSameLength(ivBytes, countBytes);
-				System.out.println("xorArraysWithSameLength");
 				byte[] countCiphered = encryptBlock(key, aesIn, isHex);
-				System.out.println("countCiphered");
-				byte[] cipherText = xorArraysWithSameLength(Bytes.toArray(blocks.get(i)), countCiphered);
-				System.out.println("xorArraysWithSameLength");
-				ret.addAll(Arrays.asList(ArrayUtils.toObject(cipherText)));
-			}
+				//w linijce ponizej zmieniamy OMP4J_THREAD_NUM na i w sekwencyjnej
+				cipherText[OMP4J_THREAD_NUM] = xorArraysWithSameLength(Bytes.toArray(blocks.get(i)), countCiphered);
+			}	
 		}
-
+		for (int i = 0; i < threads; i++) {
+			ret.addAll(Arrays.asList(ArrayUtils.toObject(cipherText[i])));	
+		}
         return ret;
     }
 
