@@ -1,3 +1,52 @@
 java -jar omp4j-1.2.jar -classpath "../por_lib/commons-codec-1.13.jar;../por_lib/guava-28.1-jre.jar;../por_lib/commons-lang3-3.0.jar;../por_lib/failureaccess-1.0.1.jar;../por_lib/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar;." Main.java
 
-java com.aes.Main
+java -classpath "../por_lib/commons-codec-1.13.jar;../por_lib/guava-28.1-jre.jar;../por_lib/commons-lang3-3.0.jar;../por_lib/failureaccess-1.0.1.jar;../por_lib/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar;." Main
+
+
+
+wiadomoœæ rozmiar 160 bloków po 16
+
+1 w¹tek - 95ms
+2 w¹tki  - 94ms
+4 w¹tki - 91ms
+8 w¹tków - 95ms
+
+wiadomoœæ rozmiar 320 bloków po 16
+
+1 w¹tek - 112ms
+2 w¹tki  - 104ms
+4 w¹tki - 105ms
+8 w¹tków - 109ms
+
+wiadomoœæ rozmiar 640 bloków po 16
+
+1 w¹tek - 141ms
+2 w¹tki  - 126ms
+4 w¹tki - 124ms
+8 w¹tków - 128ms
+
+wiadomoœæ rozmiar 1280 bloków po 16
+
+1 w¹tek - 177ms
+2 w¹tki  - 168ms
+4 w¹tki - 166ms
+8 w¹tków - 162ms
+
+wiadomoœæ rozmiar 64000 bloków po 16
+
+sekwencyjnie - 1421ms
+2 w¹tki  - 931ms
+4 w¹tki - 701ms
+8 w¹tków - 615ms
+
+wiadomoœæ rozmiar 640000 bloków po 16
+
+sekwencyjnie - 11946ms
+2 w¹tki  - 6860ms
+4 w¹tki - 3908ms
+8 w¹tków - 3545ms
+32 w¹tki - 3476ms
+128 w¹tków - 3488ms
+256 w¹tków  - 3576ms
+
+
