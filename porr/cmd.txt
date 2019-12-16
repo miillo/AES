@@ -3,7 +3,7 @@ java -jar omp4j-1.2.jar -classpath "../por_lib/commons-codec-1.13.jar;../por_lib
 java -classpath "../por_lib/commons-codec-1.13.jar;../por_lib/guava-28.1-jre.jar;../por_lib/commons-lang3-3.0.jar;../por_lib/failureaccess-1.0.1.jar;../por_lib/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar;." Main
 
 
-
+KLUCZ: 000102030405060708090a0b0c0d0e0f0a0b0c0d0e0f0a0b
 wiadomoœæ rozmiar 160 bloków po 16
 
 1 w¹tek - 95ms
@@ -48,5 +48,53 @@ sekwencyjnie - 11946ms
 32 w¹tki - 3476ms
 128 w¹tków - 3488ms
 256 w¹tków  - 3576ms
+
+
+KLUCZ 000102030405060708090a0b0c0d0e0f
+
+wiadomoœæ rozmiar 160 bloków po 16
+
+1 w¹tek - 89ms
+2 w¹tki  - 89ms
+4 w¹tki - 90ms
+8 w¹tków - 94ms
+
+wiadomoœæ rozmiar 320 bloków po 16
+
+1 w¹tek - 100ms
+2 w¹tki  - 104ms
+4 w¹tki - 101ms
+8 w¹tków - 99ms
+
+wiadomoœæ rozmiar 640 bloków po 16
+
+1 w¹tek - 115ms
+2 w¹tki  - 120ms
+4 w¹tki - 119ms
+8 w¹tków - 122ms
+
+wiadomoœæ rozmiar 1280 bloków po 16
+
+1 w¹tek - 145ms
+2 w¹tki  - 147ms
+4 w¹tki - 152ms
+8 w¹tków - 152ms
+
+wiadomoœæ rozmiar 64000 bloków po 16
+
+sekwencyjnie - 1175ms
+2 w¹tki  - 863ms
+4 w¹tki - 658ms
+8 w¹tków - 645ms
+
+wiadomoœæ rozmiar 640000 bloków po 16
+
+sekwencyjnie - 10253ms
+2 w¹tki  - 5704ms
+4 w¹tki - 3269ms
+8 w¹tków - 3016ms
+32 w¹tki - 3059ms
+128 w¹tków - 3061ms
+256 w¹tków  - 3150ms
 
 
