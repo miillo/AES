@@ -305,7 +305,8 @@ private Map<Integer, Integer> rounds = new HashMap<Integer, Integer>(){{
         }
         currentSize += cipherKeySize;
 
-        while (expandedKey.size() < keyExpansionMaxSizes.get(cipherKeySize)) {
+        for (;expandedKey.size() < keyExpansionMaxSizes.get(cipherKeySize);) {
+//        while (expandedKey.size() < keyExpansionMaxSizes.get(cipherKeySize)) {
             //assign previous 4 bytes to the temporary storage t
             for (int i = 0; i < 4; i++) {
                 temp[i] = expandedKey.get((currentSize - 4) + i);
