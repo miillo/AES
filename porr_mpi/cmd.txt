@@ -1,0 +1,6 @@
+1. nale¿y rozpakowaæ paczkê i iœæ za instrukcjami w pliku tekstowym z paczki (zainstalowaæ rzeczy ¿eby siê zgadza³y moje œciezki to do folderu ./fmpj)
+2. skompilowaæ przyk³ad: javac -cp "./fmpj/lib/mpj.jar;./fmpj/lib/xxdev.jar;." HelloPorr.java
+3. uruchomiæ java -cp "./fmpj/lib/mpj.jar;./fmpj/lib/xxdev.jar;." HelloPorr
+
+NIEPRAWDA:
+3. uruchomiæ tak o : fmpjrun -np 2 -class HelloPorr
