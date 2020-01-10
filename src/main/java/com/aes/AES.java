@@ -19,20 +19,21 @@ public class AES {
     }
 
     //no. of rounds depends on the key length
-    private Map<Integer, Integer> rounds = new HashMap<Integer, Integer>(){{
-        put(128,10);
+    private Map<Integer, Integer> rounds = new HashMap<Integer, Integer>() {{
+        put(128, 10);
         put(192, 12);
         put(256, 14);
 
     }};
 
     //max key expansions lengths
-    private Map<Integer, Integer> keyExpansionMaxSizes = new HashMap<Integer, Integer>(){
+    private Map<Integer, Integer> keyExpansionMaxSizes = new HashMap<Integer, Integer>() {
         {
             put(16, 176);
             put(24, 208);
             put(32, 240);
-        }};
+        }
+    };
 
 
     //S-Box table for Byte Substitution layer -> taken from official documentation
@@ -56,7 +57,7 @@ public class AES {
             0x8C, 0xA1, 0x89, 0x0D, 0xBF, 0xE6, 0x42, 0x68, 0x41, 0x99, 0x2D, 0x0F, 0xB0, 0x54, 0xBB, 0x16
     };
 
-    //todo: add description from docs
+    //https://ipfs.io/ipfs/QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco/wiki/Rijndael_key_schedule.html
     private int[] rcon = {
             0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a,
             0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91, 0x39,
@@ -81,7 +82,6 @@ public class AES {
      *
      * @param message message for encryption
      * @param key     key
-     * @param mode    mode
      * @param iv      initialization vector[CBC specific]
      */
     public List<Byte> encrypt(String message, String key, boolean isHex, String iv) {
@@ -156,10 +156,11 @@ public class AES {
             }
         }
 
-        //filling 'free' spaces up to size with nulls
+        //filling 'free' spaces up to size with nulls | NOTE! It causes NPE for messages longer than 16B
         if (tmp.size() < size) {
-            for (int i = tmp.size(); i < size; i++)
+            for (int i = tmp.size(); i < size; i++) {
                 tmp.add(null);
+            }
         }
         resultList.add(tmp);
         return resultList;
@@ -206,8 +207,10 @@ public class AES {
      */
     public byte[] xorArraysWithSameLength(byte[] arr1, byte[] arr2) {
         byte[] result = new byte[arr1.length];
-        for (int i = 0; i < result.length; i++)
+        for (int i = 0; i < result.length; i++) {
+            //NOTE! This causes errors when xoring with null value
             result[i] = (byte) (arr1[i] ^ arr2[i]);
+        }
         return result;
     }
 

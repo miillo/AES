@@ -30,7 +30,7 @@ public class AESTest {
         String iv = "11223344556677889911223344556677";
 
         //our implementation
-        List<Byte> encrypted = aes.encrypt(message, key, AES.Mode.CTR, true, iv);
+        List<Byte> encrypted = aes.encrypt(message, key, true, iv);
         String encryptedStr = Hex.encodeHexString(Bytes.toArray(encrypted));
 
         //built in
@@ -46,8 +46,9 @@ public class AESTest {
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidAlgorithmParameterException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
             e.printStackTrace();
         }
-
-        assertEquals(encryptedStr, cipheredMessageStr);
+        System.out.println(encryptedStr);
+        System.out.println(cipheredMessageStr);
+        assertEquals(cipheredMessageStr, encryptedStr);
     }
 
     @Test
