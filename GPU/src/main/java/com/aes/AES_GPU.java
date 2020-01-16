@@ -205,6 +205,7 @@ public class AES_GPU {
      * @param arr2 array 2
      * @return new array with XOR'ed values
      */
+    //todo JCUDA?
     public byte[] xorArraysWithSameLength(byte[] arr1, byte[] arr2) {
         byte[] result = new byte[arr1.length];
         for (int i = 0; i < result.length; i++) {

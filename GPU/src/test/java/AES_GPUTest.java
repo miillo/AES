@@ -57,19 +57,7 @@ public class AES_GPUTest {
     }
 
     @Test
-    public void padStringTest() {
-        System.out.println(Hex.encodeHexString(aes.padString("1234567891234567")));
+    public void galoisMulTest() {
+        System.out.println(aes.galoisMul((byte)30, (byte)90)  & 0xFF);
     }
-
-    @Test
-    public void grouperTest() {
-        System.out.println(Arrays.toString(aes.grouper(aes.padString("12345678"), 3).toArray()));
-    }
-
-    @Test
-    public void hexStringToByteArrayTest() {
-        System.out.println(Arrays.toString(aes.hexStringToByteArray("11223344556677889911223344556677")));
-    }
-
-
 }

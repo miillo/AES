@@ -18,6 +18,13 @@ public class AES_JCuda {
         printGPUInfo();
     }
 
+
+    public static byte galoisMulGPU(byte a, byte b) {
+        JCudaDriver.setExceptionsEnabled(true);
+
+        return (byte)1;
+    }
+
     /**
      * Prints GPU info
      */
