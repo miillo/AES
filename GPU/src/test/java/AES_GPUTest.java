@@ -58,6 +58,11 @@ public class AES_GPUTest {
 
     @Test
     public void galoisMulTest() {
-        System.out.println(aes.galoisMul((byte)30, (byte)90)  & 0xFF);
+        System.out.println(aes.galoisMul((byte)10, (byte)12)  & 0xFF);
+    }
+
+    @Test
+    public void galoisMulGPUTest() {
+        System.out.println(AES_JCuda.galoisMulGPU((byte)10, (byte)12) & 0xFF);
     }
 }

@@ -1,5 +1,5 @@
 extern "C"
-__global__ void add(int n, unsigned char *a, unsigned char *b, unsigned char *res)
+__global__ void galoisMul(int n, unsigned char *a, unsigned char *b, unsigned char *res)
 {
      int p = 0;
         for (int i = 0; i < 8; i++) {
