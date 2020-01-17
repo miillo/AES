@@ -10,21 +10,26 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import mpi.*;
 
-public class Main {
+public class MainMain {
 
     public static void main(String[] args) {
-        Main main = new Main();
+        MainMain main = new MainMain();
 		
 		int me,size;
-		System.out.println("poczatek");
+		
 		args = MPI.Init(args);
 		me = MPI.COMM_WORLD.Rank();
 		size = MPI.COMM_WORLD.Size();
 		
-        long start = System.currentTimeMillis();
+		System.out.println(MPI.Get_processor_name()+": HelloPorr from "+me+" of "+size);
 		main.encrypt("11223344556677889911223344556677", "0001020304050607080900010203040506070809000102030405060708090a0b",true, "11223344556677889911223344556677", me, size);
-        long time = System.currentTimeMillis() - start;
-		System.out.println(time + "ms calosc");
+    
+		MPI.Finalize();
+		
+        //long start = System.currentTimeMillis();
+		//main.encrypt("11223344556677889911223344556677", "0001020304050607080900010203040506070809000102030405060708090a0b",true, "11223344556677889911223344556677", me, size);
+        //long time = System.currentTimeMillis() - start;
+		//System.out.println(time + "ms calosc");
 		
 		/*main.encrypt("11223344556677889911223344556677", "0001020304050607080900010203040506070809000102030405060708090a0b",true, "11223344556677889911223344556677");
         main.encrypt("11223344556677889911223344556677", "0001020304050607080900010203040506070809000102030405060708090a0b",true, "11223344556677889911223344556677");
@@ -50,8 +55,6 @@ public class Main {
         main.encrypt("11223344556677889911223344556677", "06070809000102030405060708090a0b",true, "11223344556677889911223344556677");
         main.encrypt("11223344556677889911223344556677", "06070809000102030405060708090a0b",true, "11223344556677889911223344556677");
         main.encrypt("11223344556677889911223344556677", "06070809000102030405060708090a0b",true, "11223344556677889911223344556677");*/
-		
-		MPI.Finalize();
        
     }
     private Map<Integer, Integer> rounds = new HashMap<Integer, Integer>(){{
@@ -127,12 +130,16 @@ public class Main {
             paddedMsg = padString(message); //todo: should be tested
         }
 
+		System.out.println(MPI.Get_processor_name()+": HelloPorr from "+rank+" of "+size);
 		
-		int iterPerProcess = 64000/size;
+		int iterPerProcess = 4/size;
 		
 		
         List<List<Byte>> blocks = grouper(paddedMsg, 16);
-        byte[] ret = new byte[iterPerProcess*16];
+        byte[] ret = new byte[iterPerProcess * 16];
+		ret = hexStringToByteArray("11223344556677889911223344556677");
+		int[] jeden=new int[1];
+		int[] zero=new int[1];
         List<Byte> retList = new ArrayList<>();
         List<Byte> retFin = new ArrayList<>();
 
@@ -143,10 +150,9 @@ public class Main {
 		//byte[][] cipherText = cipherText = new byte[iterPerProcess][];
 		
 		long start = System.currentTimeMillis();
-	
-		Syster.out.println(rank + "   " + size);
+		
 		for (int i = 0; i < iterPerProcess; i++) {
-			
+			System.out.println(iterPerProcess + " iteracja " + i);
 			byte[] countBytes = convertIntToByteArray(0);
 			byte[] aesIn = xorArraysWithSameLength(ivBytes, countBytes);
 			byte[] countCiphered = encryptBlock(key, aesIn, isHex);
@@ -154,22 +160,64 @@ public class Main {
 			retList.addAll(Arrays.asList(ArrayUtils.toObject(cipherText)));
 		}	
 		
-		if(rank==0)
+		if(rank != 0)
 		{
-			Syster.out.println(rank + "   " + size + "RANK 0");
+			byte[] data = new byte[retList.size()];
+			for (int i = 0; i < data.length; i++) {
+				data[i] = (byte) retList.get(i);
+			}
+			
+			System.out.println("WYSYLAM " + data);
+			MPI.COMM_WORLD.Send(data,0,iterPerProcess * 16,MPI.BYTE,0,100);
+			System.out.println("Process "+rank+" sends numbers to Process 0");	
+		}
+		else {
 			retFin = retList;
-			for (int i = 0; i < size; i++) {
-				MPI.COMM_WORLD.Recv(ret,0,iterPerProcess*16,MPI.BYTE,i,10);
+			for (int i = 1; i < size; i++) {
+				System.out.println("ODBIERAM");
+				MPI.COMM_WORLD.Recv(ret,0,iterPerProcess * 16,MPI.BYTE,i,100);
 				retFin.addAll(Arrays.asList(ArrayUtils.toObject(ret)));	
+				System.out.println("Process "+rank+" receives numbers from Process " + i);	
 			}
 		}
-		else {	
-			Syster.out.println(rank + "   " + size + "RANK nie 0");
-			MPI.COMM_WORLD.Send(retList.toArray(),0,iterPerProcess*16,MPI.BYTE,rank,10);
+		
+		
+		/*
+		int data_send[]=new int[1];
+		int data_recv[]=new int[size];
+		if(rank != 0)
+		{
+			System.out.println(MPI.Get_processor_name()+": HelloPorr from "+rank+" of "+size);
+			data_send[0]=100;				
+			MPI.COMM_WORLD.Send(data_send,0,1,MPI.INT,0,100);
+			System.out.println("Process "+rank+" sends number "+data_send[0]+" to Process 1");	
+			
 		}
+		else
+		{
+			if (rank == 0){
+				System.out.println(MPI.Get_processor_name()+": HelloPorr from "+rank+" of "+size);
+				MPI.COMM_WORLD.Recv(data_recv,0,1,MPI.INT,1,100);
+				//MPI.COMM_WORLD.Recv(data_recv,i,1,MPI.INT,i,10);
+				System.out.println("Process "+rank+" receives number "+data_recv[0]+" from Process " + 1);
+
+				System.out.println(MPI.Get_processor_name()+": HelloPorr from "+rank+" of "+size);
+				MPI.COMM_WORLD.Recv(data_recv,0,1,MPI.INT,2,100);
+				//MPI.COMM_WORLD.Recv(data_recv,i,1,MPI.INT,i,10);
+				System.out.println("Process "+rank+" receives number "+data_recv[0]+" from Process " + 2);
+
+				System.out.println(MPI.Get_processor_name()+": HelloPorr from "+rank+" of "+size);
+				MPI.COMM_WORLD.Recv(data_recv,0,1,MPI.INT,3,100);
+				//MPI.COMM_WORLD.Recv(data_recv,i,1,MPI.INT,i,10);
+				System.out.println("Process "+rank+" receives number "+data_recv[0]+" from Process " + 3);
+			}
+		
+		}
+		*/
 		long time = System.currentTimeMillis() - start;
 		System.out.println(time + "ms");
         return retFin;
+		
     }
 
     /**
