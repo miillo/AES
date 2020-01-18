@@ -1,7 +1,10 @@
 package com.aes;
 
 import com.google.common.primitives.Bytes;
-import org.apache.commons.codec.binary.Hex;
+import jcuda.Pointer;
+import jcuda.Sizeof;
+import jcuda.driver.*;
+import org.apache.commons.cli.CommandLine;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.ByteArrayOutputStream;
@@ -11,7 +14,31 @@ import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import static jcuda.driver.JCudaDriver.*;
+
 public class AES_GPU {
+
+    private CUfunction function;
+
+    public AES_GPU(String ptxFilePath, String functionName) {
+        initializeCUDA(ptxFilePath, functionName);
+    }
+
+    private void initializeCUDA(String ptxFilePath, String functionName) {
+        JCudaDriver.setExceptionsEnabled(true);
+
+        cuInit(0);
+        CUdevice device = new CUdevice();
+        cuDeviceGet(device, 0);
+        CUcontext context = new CUcontext();
+        cuCtxCreate(context, 0, device);
+
+        CUmodule module = new CUmodule();
+        cuModuleLoad(module, ptxFilePath);
+
+        this.function = new CUfunction();
+        cuModuleGetFunction(this.function, module, functionName);
+    }
 
     //supported modes
     public enum Mode {
@@ -484,15 +511,97 @@ public class AES_GPU {
      */
     public List<Byte> mixColumn(List<Byte> column) {
         List<Byte> columnCopy = new ArrayList<>(column);
-        byte val0 = (byte) (galoisMul(columnCopy.get(0), (byte) 2) ^ galoisMul(columnCopy.get(3), (byte) 1) ^ galoisMul(columnCopy.get(2), (byte) 1) ^ galoisMul(columnCopy.get(1), (byte) 3));
-        column.set(0, val0);
-        byte val1 = (byte) (galoisMul(columnCopy.get(1), (byte) 2) ^ galoisMul(columnCopy.get(0), (byte) 1) ^ galoisMul(columnCopy.get(3), (byte) 1) ^ galoisMul(columnCopy.get(2), (byte) 3));
-        column.set(1, val1);
-        byte val2 = (byte) (galoisMul(columnCopy.get(2), (byte) 2) ^ galoisMul(columnCopy.get(1), (byte) 1) ^ galoisMul(columnCopy.get(0), (byte) 1) ^ galoisMul(columnCopy.get(3), (byte) 3));
-        column.set(2, val2);
-        byte val3 = (byte) (galoisMul(columnCopy.get(3), (byte) 2) ^ galoisMul(columnCopy.get(2), (byte) 1) ^ galoisMul(columnCopy.get(1), (byte) 1) ^ galoisMul(columnCopy.get(0), (byte) 3));
-        column.set(3, val3);
+        byte gm01 = galoisMulGPU(columnCopy.get(0), (byte) 2);
+        byte gm02 = galoisMulGPU(columnCopy.get(3), (byte) 1);
+        byte gm03 = galoisMulGPU(columnCopy.get(2), (byte) 1);
+        byte gm04 = galoisMulGPU(columnCopy.get(1), (byte) 3);
+        byte val01 = (byte) (gm01 ^ gm02 ^ gm03 ^ gm04);
+        column.set(0, val01);
+
+        byte gm11 = galoisMulGPU(columnCopy.get(1), (byte) 2);
+        byte gm12 = galoisMulGPU(columnCopy.get(0), (byte) 1);
+        byte gm13 = galoisMulGPU(columnCopy.get(3), (byte) 1);
+        byte gm14 = galoisMulGPU(columnCopy.get(2), (byte) 3);
+        byte val11 = (byte) (gm11 ^ gm12 ^ gm13 ^ gm14);
+        column.set(1, val11);
+
+        byte gm21 = galoisMulGPU(columnCopy.get(2), (byte) 2);
+        byte gm22 = galoisMulGPU(columnCopy.get(1), (byte) 1);
+        byte gm23 = galoisMulGPU(columnCopy.get(0), (byte) 1);
+        byte gm24 = galoisMulGPU(columnCopy.get(3), (byte) 3);
+        byte val21 = (byte) (gm21 ^ gm22 ^ gm23 ^ gm24);
+        column.set(2, val21);
+
+        byte gm31 = galoisMulGPU(columnCopy.get(3), (byte) 2);
+        byte gm32 = galoisMulGPU(columnCopy.get(2), (byte) 1);
+        byte gm33 = galoisMulGPU(columnCopy.get(1), (byte) 1);
+        byte gm34 = galoisMulGPU(columnCopy.get(0), (byte) 3);
+        byte val31 = (byte) (gm31 ^ gm32 ^ gm33 ^ gm34);
+        column.set(3, val31);
+
+//        byte val0 = (byte) (galoisMul(columnCopy.get(0), (byte) 2) ^ galoisMul(columnCopy.get(3), (byte) 1) ^ galoisMul(columnCopy.get(2), (byte) 1) ^ galoisMul(columnCopy.get(1), (byte) 3));
+//        column.set(0, val0);
+//        byte val1 = (byte) (galoisMul(columnCopy.get(1), (byte) 2) ^ galoisMul(columnCopy.get(0), (byte) 1) ^ galoisMul(columnCopy.get(3), (byte) 1) ^ galoisMul(columnCopy.get(2), (byte) 3));
+//        column.set(1, val1);
+//        byte val2 = (byte) (galoisMul(columnCopy.get(2), (byte) 2) ^ galoisMul(columnCopy.get(1), (byte) 1) ^ galoisMul(columnCopy.get(0), (byte) 1) ^ galoisMul(columnCopy.get(3), (byte) 3));
+//        column.set(2, val2);
+//        byte val3 = (byte) (galoisMul(columnCopy.get(3), (byte) 2) ^ galoisMul(columnCopy.get(2), (byte) 1) ^ galoisMul(columnCopy.get(1), (byte) 1) ^ galoisMul(columnCopy.get(0), (byte) 3));
+//        column.set(3, val3);
         return column;
+    }
+
+    private byte galoisMulGPU(byte a, byte b) {
+        char ch1 = (char)a;
+        char ch2 = (char)b;
+        char[] hostInputA = {ch1};
+        char[] hostInputB = {ch2};
+
+        // Allocate the device input data, and copy the
+        // host input data to the device
+        CUdeviceptr deviceInputA = new CUdeviceptr();
+        cuMemAlloc(deviceInputA, 2 * Sizeof.CHAR);
+        cuMemcpyHtoD(deviceInputA, Pointer.to(hostInputA), 2 * Sizeof.CHAR);
+        CUdeviceptr deviceInputB = new CUdeviceptr();
+        cuMemAlloc(deviceInputB, 2 * Sizeof.FLOAT);
+        cuMemcpyHtoD(deviceInputB, Pointer.to(hostInputB), 2 * Sizeof.FLOAT);
+
+        // Allocate device output memory
+        CUdeviceptr deviceOutput = new CUdeviceptr();
+        cuMemAlloc(deviceOutput, 2 * Sizeof.FLOAT);
+
+        // Set up the kernel parameters: A pointer to an array
+        // of pointers which point to the actual values.
+        Pointer kernelParameters = Pointer.to(
+                Pointer.to(new int[]{2}),
+                Pointer.to(deviceInputA),
+                Pointer.to(deviceInputB),
+                Pointer.to(deviceOutput)
+        );
+
+        int blockSizeX = 256;
+        int gridSizeX = (int)Math.ceil((double)2 / blockSizeX);
+        cuLaunchKernel(function,
+                gridSizeX,  1, 1,      // Grid dimension
+                blockSizeX, 1, 1,      // Block dimension
+                0, null,               // Shared memory size and stream
+                kernelParameters, null // Kernel- and extra parameters
+        );
+        cuCtxSynchronize();
+
+        // Allocate host output memory and copy the device output
+        // to the host.
+        char[] hostOutput = new char[2];
+        cuMemcpyDtoH(Pointer.to(hostOutput), deviceOutput,
+                2 * Sizeof.CHAR);
+
+//        System.out.println(Arrays.toString(hostOutput));
+//        System.out.println((byte)hostOutput[0] & 0xff);
+
+        // Clean up.
+        cuMemFree(deviceInputA);
+        cuMemFree(deviceInputB);
+        cuMemFree(deviceOutput);
+        return (byte) (hostOutput[0] & 0xff);
     }
 
     /**

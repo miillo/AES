@@ -28,11 +28,6 @@ import java.util.Arrays;
 
 public class AES_JCuda {
 
-    public void executeGPUTestsTest() {
-        printGPUInfo();
-    }
-
-
     public static byte galoisMulGPU(byte a, byte b) {
         // Enable exceptions and omit all subsequent error checks
         JCudaDriver.setExceptionsEnabled(true);
@@ -110,7 +105,7 @@ public class AES_JCuda {
     /**
      * Prints GPU info
      */
-    private void printGPUInfo() {
+    public static void printGPUInfo() {
         JCuda.setExceptionsEnabled(true);
         int[] deviceCount = {0};
         cudaGetDeviceCount(deviceCount);
