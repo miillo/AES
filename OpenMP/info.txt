@@ -1,0 +1,2 @@
+1. Compile AES Main class: java -jar omp4j-1.2.jar -classpath "./Libs/commons-codec-1.13.jar;./Libs/guava-28.1-jre.jar;./Libs/commons-lang3-3.0.jar;./Libs/failureaccess-1.0.1.jar;./Libs/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar;." Main.java
+2. Run compiled: java -classpath "./Libs/commons-codec-1.13.jar;./Libs/guava-28.1-jre.jar;./Libs/commons-lang3-3.0.jar;./Libs/failureaccess-1.0.1.jar;./Libs/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar;." Main

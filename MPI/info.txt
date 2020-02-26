@@ -1,0 +1,4 @@
+1. Unzip fastmpj_for_tcpip_and_shared_memory.zip and follow installation instructions
+2. Compile AES Main class: javac -classpath "../OpenMP/Libs/commons-codec-1.13.jar;../OpenMP/Libs/guava-28.1-jre.jar;../OpenMP/Libs/commons-lang3-3.0.jar;../OpenMP/Libs/failureaccess-1.0.1.jar;../OpenMP/Libs/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar;PATH_TO_FAST_MPJ/fastMPJ/lib/mpj.jar;PATH_TO_FAST_MPJ/fastMPJ/lib/xxdev.jar;." Main.java
+3. Run compiled class: fmpjrun -np 2 -class Main
+

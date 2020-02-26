@@ -1,5 +1,5 @@
 import com.aes.AES_GPU;
-import com.aes.gpu.AES_JCuda;
+import com.aes.gpu.JCudaTest;
 import com.google.common.primitives.Bytes;
 import org.apache.commons.codec.binary.Hex;
 import org.junit.Test;
@@ -57,18 +57,7 @@ public class AES_GPUTest {
     }
 
     @Test
-    public void galoisMulTest() {
-        AES_GPU aes_gpu = new AES_GPU("test", "test");
-        System.out.println(aes_gpu.galoisMul((byte)10, (byte)12)  & 0xFF);
-    }
-
-    @Test
-    public void galoisMulGPUTest() {
-        System.out.println(AES_JCuda.galoisMulGPU((byte)10, (byte)12) & 0xFF);
-    }
-
-    @Test
     public void executeGPUTestsTest() {
-        AES_JCuda.printGPUInfo();
+        JCudaTest.printGPUInfo();
     }
 }

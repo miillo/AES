@@ -4,7 +4,6 @@ import com.google.common.primitives.Bytes;
 import jcuda.Pointer;
 import jcuda.Sizeof;
 import jcuda.driver.*;
-import org.apache.commons.cli.CommandLine;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.ByteArrayOutputStream;
@@ -539,20 +538,19 @@ public class AES_GPU {
         byte val31 = (byte) (gm31 ^ gm32 ^ gm33 ^ gm34);
         column.set(3, val31);
 
-//        byte val0 = (byte) (galoisMul(columnCopy.get(0), (byte) 2) ^ galoisMul(columnCopy.get(3), (byte) 1) ^ galoisMul(columnCopy.get(2), (byte) 1) ^ galoisMul(columnCopy.get(1), (byte) 3));
-//        column.set(0, val0);
-//        byte val1 = (byte) (galoisMul(columnCopy.get(1), (byte) 2) ^ galoisMul(columnCopy.get(0), (byte) 1) ^ galoisMul(columnCopy.get(3), (byte) 1) ^ galoisMul(columnCopy.get(2), (byte) 3));
-//        column.set(1, val1);
-//        byte val2 = (byte) (galoisMul(columnCopy.get(2), (byte) 2) ^ galoisMul(columnCopy.get(1), (byte) 1) ^ galoisMul(columnCopy.get(0), (byte) 1) ^ galoisMul(columnCopy.get(3), (byte) 3));
-//        column.set(2, val2);
-//        byte val3 = (byte) (galoisMul(columnCopy.get(3), (byte) 2) ^ galoisMul(columnCopy.get(2), (byte) 1) ^ galoisMul(columnCopy.get(1), (byte) 1) ^ galoisMul(columnCopy.get(0), (byte) 3));
-//        column.set(3, val3);
         return column;
     }
 
-    private byte galoisMulGPU(byte a, byte b) {
-        char ch1 = (char)a;
-        char ch2 = (char)b;
+    /**
+     * Galois multiplication performed on GPU
+     *
+     * @param a first polynomial
+     * @param b second polynomial
+     * @return result
+     */
+    public byte galoisMulGPU(byte a, byte b) {
+        char ch1 = (char) a;
+        char ch2 = (char) b;
         char[] hostInputA = {ch1};
         char[] hostInputB = {ch2};
 
@@ -579,9 +577,9 @@ public class AES_GPU {
         );
 
         int blockSizeX = 256;
-        int gridSizeX = (int)Math.ceil((double)2 / blockSizeX);
+        int gridSizeX = (int) Math.ceil((double) 2 / blockSizeX);
         cuLaunchKernel(function,
-                gridSizeX,  1, 1,      // Grid dimension
+                gridSizeX, 1, 1,      // Grid dimension
                 blockSizeX, 1, 1,      // Block dimension
                 0, null,               // Shared memory size and stream
                 kernelParameters, null // Kernel- and extra parameters
@@ -594,39 +592,12 @@ public class AES_GPU {
         cuMemcpyDtoH(Pointer.to(hostOutput), deviceOutput,
                 2 * Sizeof.CHAR);
 
-//        System.out.println(Arrays.toString(hostOutput));
-//        System.out.println((byte)hostOutput[0] & 0xff);
-
         // Clean up.
         cuMemFree(deviceInputA);
         cuMemFree(deviceInputB);
         cuMemFree(deviceOutput);
         return (byte) (hostOutput[0] & 0xff);
     }
-
-    /**
-     * Galois Field multiplication algorithm
-     *
-     * @param a value 1
-     * @param b value 2
-     * @return multiplication factor
-     */
-    public byte galoisMul(byte a, byte b) {
-        int p = 0;
-        for (int i = 0; i < 8; i++) {
-            if ((b & 1) == 1) {
-                p = p ^ a;
-            }
-            int hiBitSet = a & 0x80;
-            a = (byte) ((a & 0xff) << 1); // ! a must be AND'ed with 0xff for positive value [fixed int length case]
-            if (hiBitSet == 0x80) {
-                a = (byte) (a ^ 0x1b);
-            }
-            b = (byte) (b >> 1);
-        }
-        return (byte) (p % 256);
-    }
-
 
     /**
      * Creates new round key by choosing bits from expanded key
